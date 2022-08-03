@@ -16,7 +16,7 @@ interface FileApi {
     suspend fun downloadImage(): Response<ResponseBody>
 
     companion object {
-        val instance by lazy {
+        val instance: FileApi by lazy {
             Retrofit.Builder()
                 .baseUrl(BaseUrl)
                 .build().create(FileApi::class.java)

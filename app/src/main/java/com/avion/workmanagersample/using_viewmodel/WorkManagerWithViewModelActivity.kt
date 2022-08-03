@@ -6,8 +6,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 import androidx.lifecycle.Observer
-import androidx.work.Operation
-import androidx.work.Operation.State.FAILURE
 import androidx.work.WorkInfo
 import com.avion.workmanagersample.databinding.ActivityMainBinding
 import com.avion.workmanagersample.workers.WorkerKeys
@@ -31,21 +29,50 @@ class WorkManagerWithViewModelActivity : AppCompatActivity() {
         viewModel.workManagerInfos.observe(this, observeWorkInfo())
         viewModel.imageStringUriLiveData.observe(this, observeImageURIs())
 
-        binding.buttonStartPeriodicWork.setOnClickListener {
-            viewModel.beginPeriodicWork().observe(this) {
-                when (it) {
-                    Operation.IN_PROGRESS -> {
-                        binding.tvPeriodicState.text = "In Progress"
-                    }
-                    Operation.SUCCESS -> {
-                        binding.tvPeriodicState.text = "Success"
-                    }
-                    is FAILURE -> {
 
-                    }
+        viewModel.expediteWorkInfo.observe(this, observeExpediteWork())
+        viewModel.periodicWorkInfo.observe(this, observePeriodicWork())
+
+        binding.buttonExpediteWork.setOnClickListener {
+            viewModel.beginExpediteWork()
+        }
+
+        binding.buttonStartPeriodicWork.setOnClickListener {
+            viewModel.beginPeriodicWork()
+        }
+    }
+
+    private fun observePeriodicWork(): Observer<MutableList<WorkInfo>> {
+        return Observer { listOfWorkInfos ->
+            listOfWorkInfos?.let {
+                val periodicWorkInfo = listOfWorkInfos.find {
+                    it.tags == viewModel.loggingWorker.tags
                 }
+                setPeriodicWorkInfoText(periodicWorkInfo?.state)
             }
         }
+
+    }
+
+    private fun observeExpediteWork(): Observer<MutableList<WorkInfo>> {
+        return Observer { listOfWorkInfos ->
+            listOfWorkInfos?.let {
+                val expediteWorkInfo = listOfWorkInfos.find {
+                    it.tags == viewModel.expediteWorker.tags
+                }
+
+                setExpediteWorkInfoText(expediteWorkInfo?.state)
+            }
+
+        }
+    }
+
+    private fun setExpediteWorkInfoText(state: WorkInfo.State?) {
+        binding.tvExpediteWorkState.text = state?.name
+    }
+
+    private fun setPeriodicWorkInfoText(state: WorkInfo.State?) {
+        binding.tvPeriodicState.text = state?.name
     }
 
     private fun observeImageURIs(): Observer<in String> {
@@ -62,10 +89,10 @@ class WorkManagerWithViewModelActivity : AppCompatActivity() {
                 return@Observer
             }
             val downloadInfo = listOfWorkerInfo.find {
-                it.id == viewModel.downloadRequest.id
+                it.tags == viewModel.downloadRequest.tags
             }
             val filterInfo = listOfWorkerInfo.find {
-                it.id == viewModel.colorFilterRequest.id
+                it.tags == viewModel.colorFilterRequest.tags
             }
 
             val downloadedImageUri = downloadInfo?.outputData?.getString(WorkerKeys.IMAGE_URI)

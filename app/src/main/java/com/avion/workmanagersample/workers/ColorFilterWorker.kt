@@ -21,7 +21,8 @@ class ColorFilterWorker(
 
 
     override suspend fun doWork(): Result {
-        val imageFile = workerParams.inputData.getString(WorkerKeys.IMAGE_URI)
+        val imageFile4 = workerParams.inputData.getString(WorkerKeys.IMAGE_URI)
+        val imageFile = imageFile4
             ?.toUri()
             ?.toFile()
 
